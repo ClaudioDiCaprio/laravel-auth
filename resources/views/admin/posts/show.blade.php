@@ -18,18 +18,17 @@
                                 @method("DELETE")
                                 <button type="submit" class="btn btn-danger my-3">Delete</button>
                             </form>
-                    </div>
-                    <div class="mb-3">
+                </div>
+                <div class="mb-3">
                        <strong>Stato:</strong> 
                         @if($post->published)
                             <span class="badge badge-success">Pubblicato</span>
                         @else
                             <span class="badge badge-secondary">bozza</span>
                         @endif
-                    </div>
-                    {{$post->content}}
                 </div>
-
+                <div>
+                    {{$post->content}}
                 </div>
             </div>
         </div>
