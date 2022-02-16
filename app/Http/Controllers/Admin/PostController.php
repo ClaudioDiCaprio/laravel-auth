@@ -4,10 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Post;
 
 class PostController extends Controller
 {
+    protected $validationRule = [
+            "title" => "required|string|max:100",
+            "content" => "required",
+            "published" =>"sometimes|accepted"
+    ];
     /**
      * Display a listing of the resource.
      *
@@ -28,7 +34,7 @@ class PostController extends Controller
      */
     public function create()
     {
-        //
+        return view('admin.posts.create');
     }
 
     /**
@@ -39,7 +45,32 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // $data = $request->all();
+
+        //validazione dei dati
+        $request->validate($this->validationRule);
+        //creazione del post
+        $data = $request->all();
+
+        $newPost = new Post();
+        $newPost->title = $data["title"];
+        $newPost->content = $data["content"];
+        $newPost->published = isset($data["published"]);
+
+        $slug = Str::of($newPost->title)->slug("-");
+        $count = 1;
+
+        while( Post::where("slug", $slug)->first() ) {
+            $slug = Str::of($newPost->title)->slug("-") . "-{$count}";
+            $count++;
+        }
+
+        $newPost->slug = $slug;
+
+        $newPost->save(); 
+        //redirect al post 
+
+        return redirect()->route("posts.show",$newPost->id);
     }
 
     /**
@@ -59,9 +90,9 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Post $post)
     {
-        //
+        return view("admin.posts.edit",compact("post"));
     }
 
     /**
@@ -71,9 +102,40 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Post $post)
     {
-        //
+        $request->validate($this->validationRule);
+
+        //aggiorno il post
+        $data = $request->all();
+
+        if( $post->title!= $data['title'] ){
+            $post->title= $data['title'];
+
+            $slug = Str::of($post->title)->slug("-");
+
+            if($slug != $post->slug) {
+                $count = 1;
+
+                while( Post::where("slug", $slug)->first() ) {
+                    $slug = Str::of($post->title)->slug("-") . "-{$count}";
+                    $count++;
+                }
+            
+                $post->slug = $slug;
+            }
+            
+        }
+
+
+        $post->content = $data["content"];
+
+        $post->published = isset($data["published"]);
+
+
+        $post->save(); 
+
+        return redirect()->route("posts.show",$post->id);
     }
 
     /**
@@ -82,8 +144,10 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Post $post)
     {
-        //
+        $post->delete();
+
+        return redirect()->route("posts.index");
     }
 }
